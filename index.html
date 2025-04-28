@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>NBN Plan Checker | Modern UI</title>
+  <title>NBN Plan Checker | Material Card Version</title>
   <style>
     :root {
       --primary-color: #4F46E5;
@@ -12,7 +12,7 @@
       --text-dark: #111827;
       --text-light: #6b7280;
       --border-color: #e5e7eb;
-      --shadow-light: 0 4px 8px rgba(0,0,0,0.05);
+      --shadow-light: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
     }
 
     body {
@@ -27,6 +27,7 @@
       font-size: 28px;
       margin-bottom: 20px;
       color: var(--primary-color);
+      text-align: center;
     }
 
     .search-container {
@@ -74,42 +75,82 @@
     }
 
     #plans-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-wrap: wrap;
       gap: 20px;
       margin-top: 30px;
+      justify-content: center;
     }
 
-    .plan-card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: var(--shadow-light);
-      text-align: center;
-      transition: 0.3s transform, 0.3s box-shadow;
-      border: 1px solid var(--border-color);
+    /* Material Card Design */
+    .card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 0.75rem;
+      background-color: white;
+      width: 280px;
+      height: 380px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+      transition: 0.3s ease;
     }
 
-    .plan-card:hover {
+    .card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      border-color: var(--primary-color);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
 
-    .plan-card strong {
-      font-size: 24px;
-      display: block;
-      margin-bottom: 8px;
+    .header {
+      background-clip: border-box;
+      margin-top: 1.5rem;
+      margin-left: 1rem;
+      margin-right: 1rem;
+      border-radius: 0.75rem;
+      background-color: rgb(33,150,243);
+      box-shadow: 0 10px 15px -3px rgba(33,150,243,.4), 0 4px 6px -4px rgba(33,150,243,.4);
+      height: 14rem;
     }
 
-    .plan-card p {
-      font-size: 16px;
+    .info {
+      border: none;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .title {
+      color: rgb(38,50,56);
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .price {
       color: var(--text-light);
+      font-size: 1rem;
+      margin-top: 8px;
     }
 
-    .plan-card input[type="radio"] {
-      margin-top: 12px;
-      transform: scale(1.3);
+    .footer {
+      padding: 0.75rem;
+      border-top: 1px solid rgb(236,239,241);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0,140,255,0.08);
+    }
+
+    .action {
+      border: none;
+      outline: none;
+      box-shadow: 0 4px 6px -1px rgba(33,150,243,.4), 0 2px 4px -2px rgba(33,150,243,.4);
+      color: white;
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: .75rem;
+      padding: 0.75rem 1.5rem;
+      background-color: rgb(33,150,243);
+      border-radius: 0.5rem;
+      cursor: pointer;
     }
 
     #submit-plan-btn {
@@ -142,9 +183,10 @@
 </div>
 
 <script>
-  const GEO_API_KEY = '5e98dc856d0942e9993f939d68e0c9d7'; // Geoapify Key
-  const NBN_API_KEY = '91e426bd3cmshef10284de2b4fd9p1f4f0djsn16a0f604d1bb'; // NBN Rapid API Key
+  const GEO_API_KEY = '5e98dc856d0942e9993f939d68e0c9d7';
+  const NBN_API_KEY = '91e426bd3cmshef10284de2b4fd9p1f4f0djsn16a0f604d1bb';
   let debounceTimer;
+  let selectedPlan = "";
 
   const pricingTables = {
     'FTTP': [
@@ -166,13 +208,7 @@
       { speed: '50/20', price: '$89.99' },
       { speed: '25/5', price: '$79.99' }
     ],
-    'FTTN': [
-      { speed: '100/40', price: '$99.99' },
-      { speed: '100/20', price: '$94.99' },
-      { speed: '50/20', price: '$89.99' },
-      { speed: '25/5', price: '$79.99' }
-    ],
-    'FTTB': [
+    'FTTN_FTTC_FTTB': [
       { speed: '100/40', price: '$99.99' },
       { speed: '100/20', price: '$94.99' },
       { speed: '50/20', price: '$89.99' },
@@ -180,9 +216,6 @@
     ],
     'Wireless': [
       { speed: '75/10', price: '$99.00' },
-      { speed: '25/5', price: '$79.99' }
-    ],
-    'Satellite': [
       { speed: '25/5', price: '$79.99' }
     ]
   };
@@ -192,7 +225,7 @@
     debounceTimer = setTimeout(() => {
       const query = document.getElementById('search').value;
       searchAddress(query);
-    }, 300);
+    }, 200);
   }
 
   async function searchAddress(query) {
@@ -250,20 +283,33 @@
         return;
       }
 
-      let availablePlans = pricingTables[techType] || pricingTables['Satellite'];
+      let availablePlans = [];
 
       if (fiberEligible === true || fiberEligible === "true") {
         availablePlans = pricingTables['FTTP'];
+      } else if (techType === 'FTTP') {
+        availablePlans = pricingTables['FTTP'];
+      } else if (techType === 'HFC') {
+        availablePlans = pricingTables['HFC'];
+      } else if (techType === 'FTTN' || techType === 'FTTC' || techType === 'FTTB') {
+        availablePlans = pricingTables['FTTN_FTTC_FTTB'];
+      } else {
+        availablePlans = pricingTables['Wireless'];
       }
 
       plansContainer.innerHTML = '';
 
       availablePlans.forEach(plan => {
         plansContainer.innerHTML += `
-          <div class="plan-card">
-            <strong>${plan.speed}</strong>
-            <p>${plan.price}</p>
-            <input type="radio" name="plan" value="${plan.speed}">
+          <div class="card">
+            <div class="header"></div>
+            <div class="info">
+              <p class="title">${plan.speed} Plan</p>
+              <p class="price">${plan.price} / month</p>
+            </div>
+            <div class="footer">
+              <button type="button" class="action" onclick="selectPlan('${plan.speed}')">Select Plan</button>
+            </div>
           </div>`;
       });
 
@@ -276,8 +322,12 @@
     }
   }
 
+  function selectPlan(speed) {
+    selectedPlan = speed;
+    console.log("Selected Plan:", speed);
+  }
+
   document.getElementById("submit-plan-btn").addEventListener("click", function() {
-    const selectedPlan = document.querySelector('input[name="plan"]:checked');
     const address = document.getElementById("search").value.trim();
 
     if (!selectedPlan) {
@@ -287,16 +337,14 @@
 
     const submissionDetails = {
       address: address,
-      selectedPlan: selectedPlan.value
+      selectedPlan: selectedPlan
     };
 
     console.log(submissionDetails);
-    alert(`Plan submitted successfully:\nAddress: ${address}\nPlan: ${selectedPlan.value}`);
-    // You can send submissionDetails to your CRM/email/server here
+    alert(`Plan submitted successfully:\nAddress: ${address}\nPlan: ${selectedPlan}`);
+    // You can send submissionDetails to CRM/email/server here
   });
 </script>
 
 </body>
 </html>
-
-
